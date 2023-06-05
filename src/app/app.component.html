@@ -1,1 +1,17 @@
-<h3>Hello</h3>
+<div class="container">
+  <h1>Marvel Character Auto-Suggest</h1>
+  <div class="autosuggest-container">
+    <input
+      type="text"
+      placeholder="Type the first 2 letters of a character's name"
+      [(ngModel)]="searchTerm"
+      (input)="onSearchChange()" />
+    <ul *ngIf="showSuggestions">
+      <li
+        *ngFor="let character of filteredCharacters"
+        (click)="selectCharacter(character)">
+        {{ character.name }}
+      </li>
+    </ul>
+  </div>
+</div>
