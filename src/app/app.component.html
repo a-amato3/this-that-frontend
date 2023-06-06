@@ -14,12 +14,12 @@
   </nav>
 
   <div class="container">
-    <h1>Marvel Character Auto-Suggest</h1>
+    <h1>Marvel Character List</h1>
     <div class="autosuggest-container" [formGroup]="form">
       <input
         type="text"
         placeholder="Enter the character's name"
-        formControlName="input"
+        [formControlName]="INPUT"
         class="autosuggest-input" />
       <ul class="autosuggest-list" *ngIf="showSuggestions">
         <li

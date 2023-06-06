@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { debounceTime } from 'rxjs';
 import { characterUrl } from 'src/environments/environment';
 import { Character } from './types/character.model';
@@ -11,15 +11,15 @@ import { Character } from './types/character.model';
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit {
-  darkMode: boolean = false;
-  limit = 100;
-  offset = 0;
-  allCharacters: Character[] = [];
+  public darkMode: boolean = false;
+  public limit = 100;
+  public offset = 0;
+  public allCharacters: Character[] = [];
 
-  form: FormGroup;
-  searchControl: FormControl = new FormControl();
-  filteredCharacters: Character[] = [];
-  showSuggestions: boolean = false;
+  public form: FormGroup;
+  public filteredCharacters: Character[] = [];
+  public showSuggestions: boolean = false;
+  public readonly INPUT = 'input';
 
   constructor(
     private readonly http: HttpClient,
@@ -32,21 +32,30 @@ export class AppComponent implements OnInit {
     this.fetchCharacters();
   }
 
+  /**
+   * Builds the form with a single form control for the input field.
+   */
   private buildForm(): void {
     this.form = this.formBuilder.group({
-      input: this.searchControl,
+      [this.INPUT]: this.formBuilder.control(null),
     });
   }
 
+  /**
+   * Subscribes to changes in the input field value and triggers a search after time is debounced.
+   */
   private watchFormChanges(): void {
-    this.searchControl.valueChanges
-      .pipe(debounceTime(100))
+    this.form.controls[this.INPUT].valueChanges
+      .pipe(debounceTime(200))
       .subscribe((value: string) => {
         this.searchCharacters(value);
       });
   }
 
-  private fetchCharacters(): void {
+  /**
+   * Fetches characters from the API by making consecutive requests with pagination to get a full list.
+   */
+  public fetchCharacters(): void {
     this.allCharacters = [];
     this.offset = 0;
 
@@ -74,7 +83,13 @@ export class AppComponent implements OnInit {
     fetchNextCharacters();
   }
 
-  private searchCharacters(searchTerm: string): void {
+  /**
+   * Filters characters based on the search term and updates the filteredCharacters array.
+   * If the search term is empty, the filteredCharacters array is cleared.
+   * Sets showSuggestions to true to display the suggestions.
+   * @param searchTerm The search term entered by the user.
+   */
+  public searchCharacters(searchTerm: string): void {
     if (searchTerm !== null && searchTerm.trim() !== '') {
       this.filteredCharacters = this.allCharacters.filter(
         (character: Character) =>
@@ -87,13 +102,21 @@ export class AppComponent implements OnInit {
     this.showSuggestions = true;
   }
 
+  /**
+   * Resets the form, hides the suggestions, and displays an alert with the selected character's name.
+   * @param character The selected character.
+   */
   public selectCharacter(character: any): void {
     this.form.reset();
     this.showSuggestions = false;
     alert(character.name);
   }
 
-  toggleColorScheme(): void {
+  /**
+   * Resets the form, hides the suggestions, and displays an alert with the selected character's name.
+   * @param character The selected character.
+   */
+  public toggleColorScheme(): void {
     this.darkMode = !this.darkMode;
   }
 }
