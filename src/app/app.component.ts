@@ -1,8 +1,9 @@
-import { Component, OnChanges, OnInit } from '@angular/core';
-import * as CryptoJS from 'crypto-js';
+import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
+import { debounceTime } from 'rxjs';
+import { characterUrl } from 'src/environments/environment';
 import { Character } from './types/character.model';
-import { tap } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -10,35 +11,50 @@ import { tap } from 'rxjs';
   styleUrls: ['./app.component.scss'],
 })
 export class AppComponent implements OnInit {
-  publicKey = '42e4e75d5db25ebeb8f6f3433b1a6378';
-  privateKey = '5ec2279b9a08f936eab47ea11af240f9dd079c20';
-  timestamp = new Date().getTime().toString();
-  apiUrl = 'https://gateway.marvel.com/v1/public/characters';
+  darkMode: boolean = false;
   limit = 100;
   offset = 0;
-  allCharacters: any[] = []; // Initialize allCharacters array
+  allCharacters: Character[] = [];
 
-  hash: string = CryptoJS.MD5(
-    this.timestamp + this.privateKey + this.publicKey
-  ).toString();
-  url = `${this.apiUrl}?ts=${this.timestamp}&apikey=${this.publicKey}&hash=${this.hash}`;
-
-  filteredCharacters: any[] = [];
+  form: FormGroup;
+  searchControl: FormControl = new FormControl();
+  filteredCharacters: Character[] = [];
   showSuggestions: boolean = false;
-  searchTerm: string = '';
 
-  constructor(private readonly http: HttpClient) {}
+  constructor(
+    private readonly http: HttpClient,
+    private readonly formBuilder: FormBuilder
+  ) {}
 
   public ngOnInit(): void {
+    this.buildForm();
+    this.watchFormChanges();
     this.fetchCharacters();
   }
 
+  private buildForm(): void {
+    this.form = this.formBuilder.group({
+      input: this.searchControl,
+    });
+  }
+
+  private watchFormChanges(): void {
+    this.searchControl.valueChanges
+      .pipe(debounceTime(100))
+      .subscribe((value: string) => {
+        this.searchCharacters(value);
+      });
+  }
+
   private fetchCharacters(): void {
-    const fetchNextCharacters = (): void => {
-      const urlWithPagination = `${this.url}&limit=${this.limit}&offset=${this.offset}`;
+    this.allCharacters = [];
+    this.offset = 0;
+
+    const fetchNextCharacters = () => {
+      const urlWithPagination = `${characterUrl}&limit=${this.limit}&offset=${this.offset}`;
 
       this.http.get<any>(urlWithPagination).subscribe(
-        response => {
+        (response: any) => {
           const characters = response.data.results;
           this.allCharacters.push(...characters);
 
@@ -46,12 +62,11 @@ export class AppComponent implements OnInit {
             this.offset += this.limit;
             fetchNextCharacters();
           } else {
-            this.filteredCharacters = this.allCharacters;
+            this.searchCharacters('');
           }
         },
-        error => {
+        (error: any) => {
           console.error('An error occurred while fetching characters:', error);
-          // Handle the error as needed
         }
       );
     };
@@ -59,20 +74,26 @@ export class AppComponent implements OnInit {
     fetchNextCharacters();
   }
 
-  public onSearchChange(): void {
-    this.filteredCharacters = this.allCharacters.filter(
-      (character: Character) => {
-        return character.name
-          .toLowerCase()
-          .startsWith(this.searchTerm.toLowerCase());
-      }
-    );
+  private searchCharacters(searchTerm: string): void {
+    if (searchTerm !== null && searchTerm.trim() !== '') {
+      this.filteredCharacters = this.allCharacters.filter(
+        (character: Character) =>
+          character.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    } else {
+      this.filteredCharacters = [];
+    }
+
     this.showSuggestions = true;
   }
 
   public selectCharacter(character: any): void {
-    this.searchTerm = ''; // Clear the input field
+    this.form.reset();
     this.showSuggestions = false;
-    alert(character.name); // Display an alert with the character's name
+    alert(character.name);
+  }
+
+  toggleColorScheme(): void {
+    this.darkMode = !this.darkMode;
   }
 }

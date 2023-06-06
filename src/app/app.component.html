@@ -1,17 +1,34 @@
-<div class="container">
-  <h1>Marvel Character Auto-Suggest</h1>
-  <div class="autosuggest-container">
-    <input
-      type="text"
-      placeholder="Type the first 2 letters of a character's name"
-      [(ngModel)]="searchTerm"
-      (input)="onSearchChange()" />
-    <ul *ngIf="showSuggestions">
-      <li
-        *ngFor="let character of filteredCharacters"
-        (click)="selectCharacter(character)">
-        {{ character.name }}
-      </li>
-    </ul>
+<div
+  class="page-container"
+  [ngClass]="{ 'light-mode': !darkMode, 'dark-mode': darkMode }">
+  <nav class="top-nav">
+    <div class="centered-text">
+      <h3>This That App</h3>
+    </div>
+    <div class="right-aligned">
+      <button class="color-toggle" (click)="toggleColorScheme()">
+        <i *ngIf="darkMode" class="fas fa-sun"> Toggle Light Mode</i>
+        <i *ngIf="!darkMode" class="fas fa-moon"> Toggle Dark Mode</i>
+      </button>
+    </div>
+  </nav>
+
+  <div class="container">
+    <h1>Marvel Character Auto-Suggest</h1>
+    <div class="autosuggest-container" [formGroup]="form">
+      <input
+        type="text"
+        placeholder="Enter the character's name"
+        formControlName="input"
+        class="autosuggest-input" />
+      <ul class="autosuggest-list" *ngIf="showSuggestions">
+        <li
+          *ngFor="let character of filteredCharacters"
+          (click)="selectCharacter(character)"
+          class="autosuggest-item">
+          {{ character.name }}
+        </li>
+      </ul>
+    </div>
   </div>
 </div>
